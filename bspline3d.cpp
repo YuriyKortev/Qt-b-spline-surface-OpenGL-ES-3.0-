@@ -2,7 +2,7 @@
 
 #include <QDebug>
 
-Bspline3d::Bspline3d():d_u(3),d_v(3),num_u(6),num_v(6),res_x(500),res_y(200)
+Bspline3d::Bspline3d():d_u(3),d_v(3),num_u(6),num_v(6),res_x(100),res_y(100)
 {
 
     control_points={
@@ -15,7 +15,42 @@ Bspline3d::Bspline3d():d_u(3),d_v(3),num_u(6),num_v(6),res_x(500),res_y(200)
     };
 
 
-    calcSurface();
+    initKnotVector_u();
+    initKnotVector_v();
+
+
+    float umin=knotVector_u[0];
+    float umax=knotVector_u.last();
+    float delta_u=umax-umin;
+    float u_step=delta_u/res_x;
+
+    float vmin=knotVector_v[0];
+    float vmax=knotVector_v.last();
+    float delta_v=umax-umin;
+    float v_step=delta_v/res_y;
+
+
+    for(float u=umin;u<umax;u+=u_step){
+        GLuint i=0;
+        for(float v=vmin;v<vmax;v+=v_step){
+
+            float x=0.0f, y=0.0f, z=0.0f;
+            GLuint ind=0;
+
+            for(int i=0;i<num_v;i++){
+                for(int j=0;j<num_u;j++){
+                    x+=B(u,j,d_u,knotVector_u)*B(v,i,d_v,knotVector_v)*control_points[i*num_v+j].x();
+                    y+=B(u,j,d_u,knotVector_u)*B(v,i,d_v,knotVector_v)*control_points[i*num_v+j].y();
+                    z+=B(u,j,d_u,knotVector_u)*B(v,i,d_v,knotVector_v)*control_points[i*num_v+j].z();
+                }
+            }
+            points.append(QVector3D{x,y,z});
+            indices.append(ind+i);
+            ind+=2;
+        }
+        i++;
+    }
+
 }
 
 
@@ -83,42 +118,6 @@ void Bspline3d::initKnotVector_v()
     this->knotVector_v=knots;
 }
 
-void Bspline3d::calcSurface()
-{
-
-    points.clear();
-    initKnotVector_u();
-    initKnotVector_v();
-
-
-    float umin=knotVector_u[0];
-    float umax=knotVector_u.last();
-    float delta_u=umax-umin;
-    float u_step=delta_u/res_x;
-
-    float vmin=knotVector_v[0];
-    float vmax=knotVector_v.last();
-    float delta_v=umax-umin;
-    float v_step=delta_v/res_y;
-
-
-    for(float u=umin;u<umax;u+=u_step){
-        for(float v=vmin;v<vmax;v+=v_step){
-
-            float x=0.0f, y=0.0f, z=0.0f;
-
-            for(int i=0;i<num_v;i++){
-                for(int j=0;j<num_u;j++){
-                    x+=B(u,j,d_u,knotVector_u)*B(v,i,d_v,knotVector_v)*control_points[i*num_v+j].x();
-                    y+=B(u,j,d_u,knotVector_u)*B(v,i,d_v,knotVector_v)*control_points[i*num_v+j].y();
-                    z+=B(u,j,d_u,knotVector_u)*B(v,i,d_v,knotVector_v)*control_points[i*num_v+j].z();
-                }
-            }
-            points.append(QVector3D{x,y,z});
-
-        }
-    }
-}
 
 void Bspline3d::drawControlPoints(QMatrix4x4 mvp)
 {
@@ -176,7 +175,10 @@ void Bspline3d::drawSurface(QMatrix4x4 mvp,float time, float velocity, float amp
 
     m_program->enableAttributeArray( m_posAttr );
 
-    glDrawArrays( GL_POINTS, 0, points.length() );
+
+    //glDrawElements(GL_POINTS,indices.size(),GL_UNSIGNED_INT,indices.data());
+    glDrawArrays(GL_POINTS,0,points.size());
+
 
     m_program->disableAttributeArray( m_posAttr);
     m_program->release();

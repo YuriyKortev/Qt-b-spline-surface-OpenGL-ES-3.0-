@@ -1,3 +1,10 @@
+#ifdef GL_ES
+// Set default precision to medium
+precision mediump int;
+precision mediump float;
+#endif
+
+
 attribute vec4 vertexAttr;
 uniform mat4 matrix;
 in vec3 colorAttr;

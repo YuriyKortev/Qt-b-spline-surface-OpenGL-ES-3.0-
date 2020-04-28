@@ -13,12 +13,15 @@ class Bspline3d : protected QOpenGLFunctions
 {
 public:
     Bspline3d();
+    ~Bspline3d();
     void drawControlPoints(QMatrix4x4 mvp);
     void drawSurface(QMatrix4x4 mvp,float time ,float velocity=0.08f, float ampl=0.1f, float k=2*M_PI/0.6f);
 
 private:
     QVector<QVector3D> points;
+    QVector<GLushort> indices;
     QVector<QVector3D> control_points;
+
 
     QVector<GLfloat> knotVector_u;
     QVector<GLfloat> knotVector_v;
@@ -36,7 +39,6 @@ private:
     void initKnotVector_u();
     void initKnotVector_v();
 
-    void calcSurface();
 
 
     QOpenGLShaderProgram* m_program;
